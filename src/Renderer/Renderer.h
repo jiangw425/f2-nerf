@@ -51,6 +51,7 @@ class Renderer : public Pipe {
 public:
   Renderer(GlobalDataPool* global_data_pool, int n_images);
   RenderResult Render(const Tensor& rays_o, const Tensor& rays_d, const Tensor& bounds, const Tensor& emb_idx);
+  Tensor RenderRGB(const Tensor& rays_o, const Tensor& rays_d, const Tensor& bounds, const Tensor& emb_idx);
 
   int LoadStates(const std::vector<Tensor>& states, int idx) override;
   std::vector<Tensor> States() override ;

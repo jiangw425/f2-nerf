@@ -292,6 +292,30 @@ std::tuple<Tensor, Tensor, Tensor> ExpRunner::RenderWholeImage(Tensor rays_o, Te
   return { pred_colors, first_oct_disp, pred_disp };
 }
 
+Tensor ExpRunner::RenderRGBImage(Tensor rays_o, Tensor rays_d, Tensor bounds) {
+  torch::NoGradGuard no_grad_guard;
+  rays_o = rays_o.to(torch::kCPU);
+  rays_d = rays_d.to(torch::kCPU);
+  bounds = bounds.to(torch::kCPU);
+  const int n_rays = rays_d.sizes()[0];
+
+  Tensor pred_colors = torch::zeros({n_rays, 3}, CPUFloat);
+
+  const int ray_batch_size = 8192;
+  for (int i = 0; i < n_rays; i += ray_batch_size) {
+    int i_high = std::min(i + ray_batch_size, n_rays);
+    Tensor cur_rays_o = rays_o.index({Slc(i, i_high)}).to(torch::kCUDA).contiguous();
+    Tensor cur_rays_d = rays_d.index({Slc(i, i_high)}).to(torch::kCUDA).contiguous();
+    Tensor cur_bounds = bounds.index({Slc(i, i_high)}).to(torch::kCUDA).contiguous();
+
+    auto render_result_colors = renderer_->RenderRGB(cur_rays_o, cur_rays_d, cur_bounds, Tensor());
+    Tensor colors = render_result_colors.detach().to(torch::kCPU);
+    pred_colors.index_put_({Slc(i, i_high)}, colors);
+  }
+
+  return pred_colors;
+}
+
 void ExpRunner::RenderAllImages() {
   for (int idx = 0; idx < dataset_->n_images_; idx++) {
     VisualizeImage(idx);

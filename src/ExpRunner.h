@@ -25,6 +25,7 @@ public:
   void SaveCheckpoint();
   void UpdateAdaParams();
   std::tuple<Tensor, Tensor, Tensor> RenderWholeImage(Tensor rays_o, Tensor rays_d, Tensor bounds);
+  Tensor RenderRGBImage(Tensor rays_o, Tensor rays_d, Tensor bounds);
   void RenderPath();
   void VisualizeImage(int idx);
 
